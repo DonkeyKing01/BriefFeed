@@ -1,0 +1,181 @@
+{
+    "name": "BriefFeed — 专业情报简报",
+    "nodes": [
+        {
+            "id": "aa000001-0000-0000-0000-000000000001",
+            "name": "手动触发",
+            "type": "n8n-nodes-base.manualTrigger",
+            "typeVersion": 1,
+            "position": [
+                200,
+                400
+            ],
+            "parameters": {}
+        },
+        {
+            "id": "aa000007-0000-0000-0000-000000000007",
+            "name": "读取配置",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                440,
+                400
+            ],
+            "parameters": {
+                "mode": "runOnceForAllItems",
+                "jsCode": "// ============================================================\n// BriefFeed 配置中心 — 修改此节点来调整所有抓取与评分参数\n// rss_sources 对应 config/rss_sources.json（不含 template）\n// 其余设置对应 config/settings.json（不含 template）\n// ============================================================\nconst CONFIG = {\n\n  // ---------- arXiv ----------\n  arxiv_rss_categories: ['cs.AI', 'cs.HC', 'cs.LG', 'cs.RO'],\n  paper_keywords: [\n    '(\"human computer interaction\" OR HCI) AND (\"large language model\" OR LLM OR agent)',\n    '(\"computer aided design\" OR CAD) AND (\"artificial intelligence\" OR \"machine learning\")',\n    '(\"multimodal\" OR \"multi-modal\") AND (\"3D\" OR \"design\" OR \"engineering\")',\n    '\"design automation\" AND (\"AI\" OR \"agent\" OR \"intelligent\")',\n    '\"engineering assistant\" OR \"CAD copilot\" OR \"design intelligence\"',\n  ],\n\n  // ---------- GitHub ----------\n  github_keywords: [\n    'CAD AI assistant',\n    'engineering design agent LLM',\n    'CAD copilot',\n    'HCI design tool AI',\n    'design automation agent',\n  ],\n  github_quality: {\n    stars_min:          10,   // star 数最低门槛（降低以避免漏掉新兴项目）\n    pushed_within_days: 365,  // 最近活跃天数（0 = 不过滤）\n    keep_top:           8,    // 每个关键词最多保留几个（按 star 降序）\n  },\n\n  // ---------- RSS 源（来自 config/rss_sources.json）----------\n  rss_sources: [\n    { name: 'OpenAI Blog',              url: 'https://openai.com/news/rss.xml',                                                                                    category: 'AI公司博客',           enabled: true  },\n    { name: 'Anthropic News',           url: 'https://www.anthropic.com/news/rss.xml',                                                                             category: 'AI公司博客',           enabled: true  },\n    { name: 'Google DeepMind Blog',     url: 'https://deepmind.com/blog/feed/basic/',                                                                              category: 'AI公司博客',           enabled: true  },\n    { name: 'Hugging Face Blog',        url: 'https://huggingface.co/blog/feed.xml',                                                                               category: 'AI工具',               enabled: true  },\n    { name: 'LangChain Blog',           url: 'https://blog.langchain.dev/rss/',                                                                                    category: 'AI工具',               enabled: true  },\n    { name: 'LlamaIndex Blog',          url: 'https://www.llamaindex.ai/blog/rss.xml',                                                                             category: 'AI工具',               enabled: true  },\n    { name: 'Jina AI',                  url: 'https://jina.ai/news/rss.xml',                                                                                       category: 'AI工具',               enabled: true  },\n    { name: 'Microsoft Research Blog',  url: 'https://www.microsoft.com/en-us/research/feed/',                                                                     category: '研究机构',             enabled: true  },\n    { name: 'deeplearning.ai',          url: 'https://rsshub.bestblogs.dev/deeplearning/the-batch',                                                                category: '研究机构',             enabled: true  },\n    { name: 'The GitHub Blog',          url: 'https://github.blog/feed/',                                                                                          category: '开源社区',             enabled: true  },\n    { name: 'Vercel News',              url: 'https://vercel.com/atom',                                                                                            category: '工程/AI产品',          enabled: true  },\n    { name: \"Simon Willison's Weblog\",  url: 'https://simonwillison.net/atom/everything/',                                                                         category: 'AI工程/独立技术博客',  enabled: true  },\n    { name: 'Latent Space',             url: 'https://www.latent.space/feed',                                                                                      category: 'AI工程/Agent',         enabled: true  },\n    { name: 'UX Magazine',              url: 'https://uxmag.com/feed/',                                                                                            category: 'HCI/UX',               enabled: true  },\n    { name: 'Last Week in AI',          url: 'https://lastweekin.ai/feed/',                                                                                        category: 'AI媒体',               enabled: false },\n  ],\n\n  // ---------- 评分 & 筛选（来自 config/settings.json）----------\n  scoring_weights:       { relevance: 0.5, novelty: 0.3, transferability: 0.2 },\n  max_items_per_section: 10,\n  min_score_threshold:   4,    // 三维整数分之和阈值（满分 15，建议 4~6）\n\n  // ---------- LLM ----------\n  llm_model:             'deepseek-ai/DeepSeek-V3',\n  llm_batch_size:        20,\n  llm_max_concurrency:   3,    // 建议 2~5，视 API 限流而定\n\n  // ---------- 抓取量 ----------\n  fresh_days:            7,    // 只保留最近 N 天内容（0 = 不过滤）\n  rss_items_per_source:  10,\n  arxiv_results_per_kw:  8,\n  github_results_per_kw: 20,   // 抓取候选数（过滤前），应大于 keep_top\n\n  // ---------- 输出 ----------\n  output_dir: '/briefeed-output',\n\n  // ---------- LLM 系统提示词（来自 config/researcher_profile.md）----------\n  system_prompt: 'You are filtering daily professional updates for a researcher. All your output must be in Chinese.\\n\\nThe researcher is mainly interested in:\\n1. AI for CAD and engineering design\\n2. Human-AI interaction, especially CHI/UIST-style research\\n3. Intelligent engineering assistants, CAD copilots, and design automation systems\\n4. Agentic or multi-agent workflows when they are relevant to engineering tasks\\n5. Methods, frameworks, open-source tools, and product ideas that can be transferred into real systems\\n\\nThe researcher especially values:\\n- Content that is directly useful for research or project development\\n- Methodological novelty, system design insight, and engineering applicability\\n- Work related to interactive design tools, engineering intelligence, and AI-assisted workflows\\n- Ideas that can inform the development of CAD copilot / engineering assistant / design intelligence systems\\n\\nThe researcher is less interested in:\\n- Generic AI news or hype without technical substance\\n- Marketing-heavy announcements\\n- Product updates without technical depth\\n- Content with weak relevance to design, engineering, HCI, or agent systems\\n\\nReturn ONLY a valid JSON array. For each item provide these fields:\\n- id: original index (integer)\\n- relevance: integer 0-5. How closely the topic matches the researcher interests above.\\n  0=unrelated, 1=tangential, 2=somewhat relevant, 3=relevant, 4=highly relevant, 5=core topic\\n- novelty: integer 0-5. How new, surprising, or non-obvious the contribution is.\\n  0=rehash, 1=incremental, 2=slight advance, 3=notable, 4=significant, 5=breakthrough\\n- transferability: integer 0-5. How directly the ideas/code/methods can be applied to the researcher\\'s own work.\\n  0=not applicable, 1=inspirational only, 2=partial idea, 3=useful method, 4=directly adoptable, 5=ready to use\\n- category: \"论文\" | \"博客\" | \"GitHub\"\\n- direction: \"AI+CAD\" | \"HCI\" | \"设计工具\" | \"多模态\" | \"Agent系统\" | \"其他\"\\n- summary_zh: 2-3 sentence Chinese summary of what this item is\\n- value_zh: 1-2 sentence Chinese explanation of why it matters to this researcher\\n- skip: true ONLY if relevance <= 1 (clearly off-topic), otherwise false\\n\\nCRITICAL:\\n1. Output ONLY a valid JSON array. No markdown. No extra text.\\n2. ALL scores must be integers 0-5. Never use decimals.\\n3. Do NOT modify any URLs. Use URLs exactly as provided.',\n};\n\nconsole.log('配置加载完成：RSS源 ' + CONFIG.rss_sources.filter(function(s){return s.enabled;}).length + ' 个已启用，arxiv分类 ' + CONFIG.arxiv_rss_categories.length + ' 个，github关键词 ' + CONFIG.github_keywords.length + ' 个');\nreturn [{ json: { config: CONFIG } }];"
+            }
+        },
+        {
+            "id": "aa000002-0000-0000-0000-000000000002",
+            "name": "全量数据抓取",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                680,
+                400
+            ],
+            "parameters": {
+                "mode": "runOnceForAllItems",
+                "jsCode": "// 从上游节点接收配置\nconst CONFIG = $input.first().json.config;\n\n// ============================================================\n// 工具函数\n// ============================================================\nfunction extractTag(xml, tag) {\n  const m = xml.match(new RegExp('<' + tag + '[^>]*>([^]*?)<[/]' + tag + '>', 'i'));\n  return m ? m[1].trim() : '';\n}\nfunction extractAttrHref(xml) {\n  const m = xml.match(/<link[^>]+href=['\"]([^'\"]+)['\"]/i);\n  return m ? m[1] : '';\n}\nfunction stripHtml(s) {\n  return s\n    .replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/gi, '$1')\n    .replace(/<[^>]+>/g, '')\n    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '\"').replace(/&#\\d+;/g, '')\n    .trim();\n}\nfunction parseRSS(xml, sourceName, category, maxItems) {\n  const items = [];\n  const rx = /<(?:item|entry)[^]*?<[/](?:item|entry)>/gi;\n  for (const chunk of (xml.match(rx) || []).slice(0, maxItems || 10)) {\n    const title = stripHtml(extractTag(chunk, 'title'));\n    const link  = (extractTag(chunk, 'link') || extractAttrHref(chunk)).trim();\n    const desc  = stripHtml(extractTag(chunk, 'summary') || extractTag(chunk, 'description') || extractTag(chunk, 'content') || '');\n    const pub   = extractTag(chunk, 'pubDate') || extractTag(chunk, 'published') || extractTag(chunk, 'updated') || '';\n    if (!title || !link || !link.startsWith('http')) continue;\n    items.push({ title, url: link, abstract: desc.slice(0, 400), date: pub ? new Date(pub).toISOString().split('T')[0] : new Date().toISOString().split('T')[0], source: sourceName, source_type: 'blog', category });\n  }\n  return items;\n}\nfunction parseArxiv(xml, label) {\n  const items = [];\n  for (const chunk of (xml.match(/<entry[^]*?<[/]entry>/gi) || [])) {\n    const title   = stripHtml(extractTag(chunk, 'title')).replace(/\\s+/g, ' ').trim();\n    const id      = extractTag(chunk, 'id').trim();\n    const summary = stripHtml(extractTag(chunk, 'summary'));\n    const pub     = extractTag(chunk, 'published') || '';\n    if (!title || !id) continue;\n    items.push({ title, url: id.replace('http://arxiv.org/abs/', 'https://arxiv.org/abs/'), abstract: summary.slice(0, 500), date: pub ? pub.split('T')[0] : new Date().toISOString().split('T')[0], source: 'arXiv (' + label + ')', source_type: 'paper', category: label });\n  }\n  return items;\n}\nfunction isFresh(item, cutoff) {\n  if (!cutoff || !item.date) return true;\n  try { return new Date(item.date).getTime() >= cutoff; } catch(e) { return true; }\n}\n\n// ============================================================\n// HTTP 工具函数\n// ============================================================\nconst https = require('https');\nconst http = require('http');\nconst nodeUrl = require('url');\nfunction httpGet(urlStr, headers, timeoutMs) {\n  return new Promise(function(resolve, reject) {\n    const u = nodeUrl.parse(urlStr);\n    const isHttps = u.protocol === 'https:';\n    const lib = isHttps ? https : http;\n    const opts = { hostname: u.hostname, port: u.port ? parseInt(u.port) : (isHttps ? 443 : 80), path: (u.pathname || '/') + (u.search || ''), method: 'GET', headers: Object.assign({ 'User-Agent': 'BriefFeed/1.0' }, headers || {}), timeout: timeoutMs || 18000 };\n    const req = lib.request(opts, function(res) {\n      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {\n        return resolve(httpGet(res.headers.location, headers, timeoutMs));\n      }\n      const chunks = [];\n      res.on('data', function(c) { chunks.push(c); });\n      res.on('end', function() { resolve(Buffer.concat(chunks).toString('utf-8')); });\n    });\n    req.on('timeout', function() { req.destroy(); reject(new Error('Request timed out')); });\n    req.on('error', reject);\n    req.end();\n  });\n}\nfunction httpGetJson(urlStr, headers, timeoutMs) {\n  return httpGet(urlStr, headers, timeoutMs).then(function(text) { return JSON.parse(text); });\n}\n\n// ============================================================\n// 并发抓取\n// ============================================================\nconst errors = [];\nconst T = 18000;\nconst cutoff = CONFIG.fresh_days > 0 ? Date.now() - CONFIG.fresh_days * 86400000 : 0;\nconst maxRSS = CONFIG.rss_items_per_source || 10;\nconst maxArxiv = CONFIG.arxiv_results_per_kw || 8;\nconst maxGH = CONFIG.github_results_per_kw || 20;\n\n// --- 1. arXiv RSS ---\nconst arxivRssResults = await Promise.allSettled(\n  CONFIG.arxiv_rss_categories.map(function(cat) {\n    return httpGet('https://rss.arxiv.org/rss/' + cat, {}, T)\n      .then(function(xml) {\n        return parseRSS(xml, 'arXiv ' + cat, cat, maxRSS).map(function(i) { return Object.assign({}, i, { source_type: 'paper' }); });\n      });\n  })\n);\nconst arxivRssItems = [];\narxivRssResults.forEach(function(r, i) {\n  if (r.status === 'fulfilled') { arxivRssItems.push(...r.value); }\n  else { errors.push('arXiv RSS ' + CONFIG.arxiv_rss_categories[i] + ': ' + r.reason.message); }\n});\n\n// --- 2. arXiv API 关键词搜索 ---\nconst arxivApiResults = await Promise.allSettled(\n  CONFIG.paper_keywords.map(function(kw) {\n    const url = 'https://export.arxiv.org/api/query?search_query=' + encodeURIComponent(kw) + '&start=0&max_results=' + maxArxiv + '&sortBy=submittedDate&sortOrder=descending';\n    return httpGet(url, {}, T).then(function(xml) { return parseArxiv(xml, kw.slice(0, 40)); });\n  })\n);\nconst arxivApiItems = [];\narxivApiResults.forEach(function(r, i) {\n  if (r.status === 'fulfilled') { arxivApiItems.push(...r.value); }\n  else { errors.push('arXiv API \"' + CONFIG.paper_keywords[i].slice(0, 30) + '\": ' + r.reason.message); }\n});\n\n// --- 3. RSS 源 ---\nconst enabledSources = CONFIG.rss_sources.filter(function(s) { return s.enabled; });\nconst rssResults = await Promise.allSettled(\n  enabledSources.map(function(src) {\n    return httpGet(src.url, { 'User-Agent': 'BriefFeed/1.0' }, T)\n      .then(function(xml) { return parseRSS(xml, src.name, src.category, maxRSS); });\n  })\n);\nconst rssItems = [];\nrssResults.forEach(function(r, i) {\n  if (r.status === 'fulfilled') { rssItems.push(...r.value); }\n  else { errors.push('RSS ' + enabledSources[i].name + ': ' + r.reason.message); }\n});\n\n// --- 4. GitHub ---\nconst ghHeaders = { 'Accept': 'application/vnd.github+json', 'User-Agent': 'BriefFeed/1.0' };\nconst ghToken = $env.GITHUB_TOKEN || '';\nif (ghToken) { ghHeaders['Authorization'] = 'token ' + ghToken; }\nconst ghQuality = CONFIG.github_quality || {};\nconst ghStarsMin = ghQuality.stars_min != null ? ghQuality.stars_min : 10;\nconst ghPushedDays = ghQuality.pushed_within_days != null ? ghQuality.pushed_within_days : 365;\nconst ghKeepTop = ghQuality.keep_top || 8;\nconst ghPushedCutoff = ghPushedDays > 0 ? Date.now() - ghPushedDays * 86400000 : 0;\nconst githubResults = await Promise.allSettled(\n  CONFIG.github_keywords.map(function(kw) {\n    const url = 'https://api.github.com/search/repositories?q=' + encodeURIComponent(kw) + '&sort=stars&order=desc&per_page=' + maxGH;\n    return httpGetJson(url, ghHeaders, T).then(function(d) {\n      if (!d || !d.items) return [];\n      return d.items\n        .filter(function(repo) {\n          if (repo.stargazers_count < ghStarsMin) return false;\n          if (ghPushedCutoff && repo.pushed_at) {\n            if (new Date(repo.pushed_at).getTime() < ghPushedCutoff) return false;\n          }\n          return true;\n        })\n        .slice(0, ghKeepTop)\n        .map(function(repo) {\n          const pushedDate = (repo.pushed_at || '').split('T')[0];\n          const createdDate = (repo.created_at || '').split('T')[0];\n          return {\n            title: repo.full_name,\n            url: repo.html_url,\n            abstract: (repo.description || '无描述').slice(0, 300),\n            date: pushedDate || new Date().toISOString().split('T')[0],\n            source: 'GitHub (' + kw + ')',\n            source_type: 'github',\n            category: 'GitHub',\n            stars: repo.stargazers_count,\n            extra: '⭐ ' + repo.stargazers_count + ' | 🍴 ' + repo.forks_count + ' | ' + (repo.language || '?') + ' | 最近推送 ' + pushedDate + ' | 创建 ' + createdDate,\n          };\n        });\n    });\n  })\n);\nconst githubItems = [];\ngithubResults.forEach(function(r, i) {\n  if (r.status === 'fulfilled') { githubItems.push(...r.value); }\n  else { errors.push('GitHub \"' + CONFIG.github_keywords[i] + '\": ' + r.reason.message); }\n});\n\n// --- 合并 & 新鲜度过滤 ---\nconst allItems = [...arxivRssItems, ...arxivApiItems, ...rssItems, ...githubItems]\n  .filter(function(item) { return isFresh(item, cutoff); });\n\nconsole.log('并发抓取完成：论文RSS ' + arxivRssItems.length + ' | 论文API ' + arxivApiItems.length + ' | RSS ' + rssItems.length + ' | GitHub ' + githubItems.length + ' | 新鲜过滤后 ' + allItems.length + ' 条（' + CONFIG.fresh_days + ' 天内）');\n\nreturn [{ json: { items: allItems, config: CONFIG, errors: errors, fetchedAt: new Date().toISOString() } }];"
+            }
+        },
+        {
+            "id": "aa000003-0000-0000-0000-000000000003",
+            "name": "标准化去重",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                680,
+                400
+            ],
+            "parameters": {
+                "mode": "runOnceForAllItems",
+                "jsCode": "const data = $input.first().json;\nconst items = data.items;\nconst seen = new Set();\nconst deduped = items.filter(function(item) {\n  if (!item.title || !item.url || !item.url.startsWith('http')) return false;\n  const key = item.url.replace(/v\\d+$/, '').toLowerCase().replace(/\\/$/, '');\n  if (seen.has(key)) return false;\n  seen.add(key);\n  return true;\n});\nconsole.log('抓取完成：原始 ' + items.length + ' 条 → 去重后 ' + deduped.length + ' 条');\nif (data.errors && data.errors.length) console.log('警告：' + data.errors.join(' | '));\nreturn [{ json: { items: deduped, config: data.config, errors: data.errors, fetchedAt: data.fetchedAt } }];"
+            }
+        },
+        {
+            "id": "aa000004-0000-0000-0000-000000000004",
+            "name": "LLM批次评分",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                920,
+                400
+            ],
+            "parameters": {
+                "mode": "runOnceForAllItems",
+                "jsCode": "const data = $input.first().json;\nconst items = data.items;\nconst config = data.config;\n\nconst API_KEY = $env.SILICONFLOW_API_KEY;\nif (!API_KEY) throw new Error('请配置环境变量 SILICONFLOW_API_KEY');\n\nconst SYSTEM_PROMPT = config.system_prompt;\nif (!SYSTEM_PROMPT) throw new Error('配置中缺少 system_prompt，请检查读取配置节点');\n\nconst batchSize   = config.llm_batch_size      || 20;\nconst maxConc     = config.llm_max_concurrency  || 3;\n// weights 用于将三维整数分（0-5）聚合为单一排序分（0-15），不再用 0-1 小数\nconst weights     = config.scoring_weights      || { relevance: 0.5, novelty: 0.3, transferability: 0.2 };\nconst minTotal    = config.min_score_threshold  || 4;   // 三维之和 >= 4 才保留（15 分制）\nconst model       = config.llm_model            || 'deepseek-ai/DeepSeek-V3';\nconst https_llm   = require('https');\n\nfunction callLLM(batch, batchOffset) {\n  const payload = batch.map(function(item, idx) {\n    return { id: batchOffset + idx, title: item.title, url: item.url, source: item.source, type: item.source_type, date: item.date, abstract: (item.abstract || '').slice(0, 400) };\n  });\n  const userMsg = 'Analyze the following ' + batch.length + ' items and return a JSON array:\\n\\n' + JSON.stringify(payload, null, 2) + '\\n\\nReturn ONLY the JSON array, no markdown.';\n  const bodyStr = JSON.stringify({ model: model, messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: userMsg }], max_tokens: 4096, temperature: 0.1, stream: false });\n  return new Promise(function(resolve, reject) {\n    const opts = { hostname: 'api.siliconflow.cn', port: 443, path: '/v1/chat/completions', method: 'POST', headers: { 'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr) }, timeout: 180000 };\n    const req = https_llm.request(opts, function(res) {\n      const chunks = [];\n      res.on('data', function(c) { chunks.push(c); });\n      res.on('end', function() {\n        try {\n          const result = JSON.parse(Buffer.concat(chunks).toString('utf-8'));\n          const content = (result.choices && result.choices[0] && result.choices[0].message) ? result.choices[0].message.content : '';\n          let jsonStr = content;\n          const mdMatch = content.match(/```(?:json)?\\n?([^]*?)\\n?```/);\n          if (mdMatch) jsonStr = mdMatch[1];\n          let evals = [];\n          try { evals = JSON.parse(jsonStr.trim()); } catch(e2) {\n            const arrMatch = jsonStr.match(/\\[[^]*\\]/);\n            if (arrMatch) evals = JSON.parse(arrMatch[0]);\n          }\n          resolve(evals);\n        } catch(e) { reject(e); }\n      });\n    });\n    req.on('timeout', function() { req.destroy(); reject(new Error('LLM request timed out')); });\n    req.on('error', reject);\n    req.write(bodyStr);\n    req.end();\n  });\n}\n\nconst batches = [];\nfor (let i = 0; i < items.length; i += batchSize) {\n  batches.push({ batch: items.slice(i, i + batchSize), offset: i });\n}\n\nconst scored = [];\nfor (let gi = 0; gi < batches.length; gi += maxConc) {\n  const group = batches.slice(gi, gi + maxConc);\n  console.log('并发提交批次 ' + (gi+1) + '~' + Math.min(gi+maxConc, batches.length) + '/' + batches.length);\n  const results = await Promise.allSettled(\n    group.map(function(b) { return callLLM(b.batch, b.offset); })\n  );\n  results.forEach(function(r, ri) {\n    const b = group[ri];\n    let evals = [];\n    if (r.status === 'fulfilled') {\n      evals = r.value;\n    } else {\n      console.log('批次 ' + (gi+ri+1) + ' LLM 失败: ' + r.reason.message);\n      evals = b.batch.map(function(_, idx) { return { id: b.offset+idx, relevance: 2, novelty: 2, transferability: 2, category: '博客', direction: '未分类', summary_zh: '', value_zh: '（LLM失败）', skip: false }; });\n    }\n    for (let ei = 0; ei < evals.length; ei++) {\n      const ev = evals[ei];\n      if (ev.skip) continue;\n      const localIdx = ev.id - b.offset;\n      if (localIdx < 0 || localIdx >= b.batch.length) continue;\n      const orig = b.batch[localIdx];\n      // 整数化（防止 LLM 返回小数）\n      const rel  = Math.round(Math.min(5, Math.max(0, ev.relevance      || 0)));\n      const nov  = Math.round(Math.min(5, Math.max(0, ev.novelty        || 0)));\n      const tra  = Math.round(Math.min(5, Math.max(0, ev.transferability || ev.actionability || 0)));\n      const total = rel + nov + tra;  // 0~15\n      if (total < minTotal) continue;\n      // 加权分（用于排序，保持向后兼容 score 字段）\n      const wScore = rel * (weights.relevance || 0.5) + nov * (weights.novelty || 0.3) + tra * (weights.transferability || weights.actionability || 0.2);\n      const merged = {};\n      for (const k in orig) merged[k] = orig[k];\n      merged.score            = Math.round(wScore * 100) / 100;  // 加权分，用于排序\n      merged.total_score      = total;                            // 三维总分 /15\n      merged.relevance        = rel;\n      merged.novelty          = nov;\n      merged.transferability  = tra;\n      merged.category_zh      = ev.category || (orig.source_type === 'paper' ? '论文' : orig.source_type === 'github' ? 'GitHub' : '博客');\n      merged.direction        = ev.direction || '其他';\n      merged.summary_zh       = ev.summary_zh || orig.abstract || '';\n      merged.value_zh         = ev.value_zh || '';\n      scored.push(merged);\n    }\n  });\n}\n\nconsole.log('LLM完成：' + scored.length + ' 条通过阈值，共 ' + batches.length + ' 批次（最大并发 ' + maxConc + '）');\nreturn [{ json: { items: scored, config: config, errors: data.errors, fetchedAt: data.fetchedAt } }];"
+            }
+        },
+        {
+            "id": "aa000005-0000-0000-0000-000000000005",
+            "name": "生成Markdown报告",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1160,
+                400
+            ],
+            "parameters": {
+                "mode": "runOnceForAllItems",
+                "jsCode": "const data = $input.first().json;\nconst items = data.items;\nconst config = data.config;\nconst maxN = config.max_items_per_section || 10;\n\nconst papers  = items.filter(function(i){ return i.source_type === 'paper';  }).sort(function(a,b){ return b.score-a.score; }).slice(0, maxN);\nconst blogs   = items.filter(function(i){ return i.source_type === 'blog';   }).sort(function(a,b){ return b.score-a.score; }).slice(0, maxN);\nconst githubs = items.filter(function(i){ return i.source_type === 'github'; }).sort(function(a,b){ return b.score-a.score; }).slice(0, maxN);\n\nconst now = new Date();\nconst pad = function(n){ return String(n).padStart(2,'0'); };\nconst dateStr = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate());\nconst timeStr = pad(now.getHours()) + ':' + pad(now.getMinutes());\nconst filename = 'briefeed_' + dateStr.replace(/-/g,'') + '_' + pad(now.getHours()) + pad(now.getMinutes()) + '.md';\n\nfunction fmt(item) {\n  const scoreStr = item.total_score != null ? ' | 评分 ' + item.total_score + '/15（相关' + (item.relevance||0) + ' 新颖' + (item.novelty||0) + ' 迁移' + (item.transferability||0) + '）' : '';\n  const extra = item.extra ? '\\n- **附加信息**：' + item.extra : '';\n  return '### ' + item.title + '\\n- **来源**：' + item.source + '\\n- **日期**：' + item.date + ' | **方向**：' + (item.direction||'-') + scoreStr + '\\n- **概述**：' + (item.summary_zh||item.abstract||'（无摘要）') + '\\n- **为什么值得关注**：' + (item.value_zh||'-') + extra + '\\n- **原文**：' + item.url + '\\n\\n';\n}\n\nconst errSec = data.errors && data.errors.length ? '\\n---\\n\\n> ⚠️ **抓取警告**（' + data.errors.length + ' 个源异常）\\n' + data.errors.map(function(e){ return '> - ' + e; }).join('\\n') + '\\n' : '';\n\nconst report = '# BriefFeed 情报简报 — ' + dateStr + ' ' + timeStr + '\\n\\n> 生成时间：' + data.fetchedAt + ' | 通过筛选：' + items.length + ' 条（论文 ' + papers.length + '、博客 ' + blogs.length + '、GitHub ' + githubs.length + '）\\n\\n---\\n\\n## 一、今日重点论文\\n\\n' + (papers.length ? papers.map(fmt).join('') : '_今日暂无高相关度论文。_\\n') + '\\n---\\n\\n## 二、今日技术 / 博客动态\\n\\n' + (blogs.length ? blogs.map(fmt).join('') : '_今日暂无高相关度博客动态。_\\n') + '\\n---\\n\\n## 三、今日 GitHub / 开源项目\\n\\n' + (githubs.length ? githubs.map(fmt).join('') : '_今日暂无高相关度 GitHub 项目。_\\n') + errSec;\n\nconst base64 = Buffer.from(report, 'utf-8').toString('base64');\nreturn [{ json: { filename: filename, outputDir: config.output_dir || '/briefeed-output', reportLength: report.length }, binary: { data: { data: base64, mimeType: 'text/markdown; charset=utf-8', fileName: filename, fileExtension: 'md' } } }];"
+            }
+        },
+        {
+            "id": "aa000006-0000-0000-0000-000000000006",
+            "name": "保存报告",
+            "type": "n8n-nodes-base.readWriteFile",
+            "typeVersion": 1,
+            "position": [
+                1400,
+                400
+            ],
+            "parameters": {
+                "operation": "write",
+                "fileName": "={{ $json.outputDir + '/' + $json.filename }}",
+                "dataPropertyName": "data",
+                "options": {}
+            }
+        }
+    ],
+    "connections": {
+        "手动触发": {
+            "main": [
+                [
+                    {
+                        "node": "读取配置",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "读取配置": {
+            "main": [
+                [
+                    {
+                        "node": "全量数据抓取",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "全量数据抓取": {
+            "main": [
+                [
+                    {
+                        "node": "标准化去重",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "标准化去重": {
+            "main": [
+                [
+                    {
+                        "node": "LLM批次评分",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "LLM批次评分": {
+            "main": [
+                [
+                    {
+                        "node": "生成Markdown报告",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "生成Markdown报告": {
+            "main": [
+                [
+                    {
+                        "node": "保存报告",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1",
+        "saveManualExecutions": true
+    },
+    "tags": [],
+    "pinData": {},
+    "versionId": "briefeed-v1-1",
+    "meta": {
+        "templateCredsSetupCompleted": true
+    }
+}

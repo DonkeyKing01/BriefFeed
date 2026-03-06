@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  n8n-briefeed:
+    image: n8nio/n8n:latest
+    container_name: n8n-briefeed
+    ports:
+      - "5679:5678"          # 使用 5679 避免与已有 n8n (5678) 冲突
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - GENERIC_TIMEZONE=Asia/Shanghai
+      - TZ=Asia/Shanghai
+      # ── Code 节点模块权限 ──────────────────────────────────────
+      # 允许 Code 节点使用 Node.js 内置模块（https/http 用于发起 HTTP 请求）
+      - NODE_FUNCTION_ALLOW_BUILTIN=https,http,url,buffer,stream,fs
+      # ── BriefFeed 所需密钥 ─────────────────────────────────────
+      - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    volumes:
+      # n8n 数据（工作流、凭据等）持久化
+      - n8n_briefeed_data:/home/node/.n8n
+      # 报告输出目录（容器内写入 → 宿主机可见）
+      - ./output:/briefeed-output
+      # config 目录挂载（可选，供将来扩展使用）
+      - ./config:/briefeed-config:ro
+    restart: unless-stopped
+
+volumes:
+  n8n_briefeed_data:

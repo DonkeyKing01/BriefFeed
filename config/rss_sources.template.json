@@ -1,0 +1,58 @@
+{
+  "_comment": "RSS 源配置模板 — 复制为 rss_sources.json 后按需增删",
+  "_usage": "cp config/rss_sources.template.json config/rss_sources.json",
+  "_note": "rss_sources.json 已被 .gitignore 忽略，不会上传到 Git。enabled:false 可临时禁用某个源。",
+
+  "sources": [
+    {
+      "_section": "── AI 公司博客 ──────────────────────────────────────────"
+    },
+    { "name": "OpenAI Blog",        "url": "https://openai.com/news/rss.xml",                    "category": "AI公司博客", "enabled": true  },
+    { "name": "Google DeepMind",    "url": "https://deepmind.com/blog/feed/basic/",               "category": "AI公司博客", "enabled": true  },
+    { "name": "Anthropic",          "url": "https://www.anthropic.com/news/rss.xml",              "category": "AI公司博客", "enabled": false },
+    { "name": "HuggingFace Blog",   "url": "https://huggingface.co/blog/feed.xml",                "category": "AI公司博客", "enabled": true  },
+
+    {
+      "_section": "── AI 工具 & 框架 ─────────────────────────────────────"
+    },
+    { "name": "LangChain Blog",     "url": "https://blog.langchain.dev/rss/",                    "category": "AI工具",     "enabled": true  },
+
+    {
+      "_section": "── 研究机构 ───────────────────────────────────────────"
+    },
+    { "name": "Microsoft Research", "url": "https://www.microsoft.com/en-us/research/feed/",     "category": "研究机构",   "enabled": true  },
+    { "name": "deeplearning.ai",    "url": "https://rsshub.bestblogs.dev/deeplearning/the-batch", "category": "研究机构",   "enabled": true  },
+
+    {
+      "_section": "── HCI / UX ──────────────────────────────────────────"
+    },
+    { "name": "UX Magazine",        "url": "https://uxmag.com/feed/",                            "category": "HCI/UX",     "enabled": true  },
+
+    {
+      "_section": "── 开源社区 ──────────────────────────────────────────"
+    },
+    { "name": "GitHub Blog",        "url": "https://github.blog/feed/",                          "category": "开源社区",   "enabled": true  },
+
+    {
+      "_section": "── AI 媒体 ───────────────────────────────────────────"
+    },
+    { "name": "Last Week in AI",    "url": "https://lastweekin.ai/feed/",                        "category": "AI媒体",     "enabled": true  },
+
+    {
+      "_section": "── 中文媒体（可选）──────────────────────────────────"
+    },
+    { "name": "量子位",             "url": "https://www.qbitai.com/feed",                         "category": "中文AI媒体", "enabled": false },
+
+    {
+      "_section": "── 工程 / 其他（可按需添加）──────────────────────────"
+    },
+    { "name": "ByteByteGo",         "url": "https://blog.bytebytego.com/feed",                   "category": "工程",       "enabled": false },
+    { "name": "InfoQ AI",           "url": "https://www.infoq.com/ai-ml-data-eng/articles.atom", "category": "工程",       "enabled": false },
+    { "name": "Martin Fowler",      "url": "https://martinfowler.com/feed.atom",                 "category": "工程",       "enabled": false },
+
+    {
+      "_section": "── 自定义（在此追加你自己的 RSS 源）────────────────"
+    },
+    { "name": "自定义源 1",         "url": "https://example.com/feed.xml",                       "category": "自定义",     "enabled": false }
+  ]
+}

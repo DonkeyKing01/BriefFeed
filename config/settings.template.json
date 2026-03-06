@@ -1,0 +1,49 @@
+{
+  "_comment": "BriefFeed 配置模板 — 复制为 settings.json 后填写你的个人配置",
+  "_usage": "cp config/settings.template.json config/settings.json",
+  "_note": "settings.json 已被 .gitignore 忽略，不会上传到 Git",
+
+  "arxiv_rss_categories": [
+    "cs.AI",
+    "cs.HC",
+    "cs.LG",
+    "cs.RO"
+  ],
+  "_arxiv_rss_note": "可选分类参考：cs.AI cs.CL cs.CV cs.HC cs.LG cs.MA cs.RO cs.SE eess.IV",
+
+  "paper_keywords": [
+    "填写你的关键词 1，例如：(\"human computer interaction\" OR HCI) AND (\"large language model\" OR LLM)",
+    "填写你的关键词 2，例如：(\"computer aided design\" OR CAD) AND \"artificial intelligence\"",
+    "填写你的关键词 3",
+    "填写你的关键词 4",
+    "填写你的关键词 5"
+  ],
+
+  "github_keywords": [
+    "填写 GitHub 搜索词 1，例如：CAD AI assistant",
+    "填写 GitHub 搜索词 2，例如：engineering design agent LLM",
+    "填写 GitHub 搜索词 3",
+    "填写 GitHub 搜索词 4",
+    "填写 GitHub 搜索词 5"
+  ],
+
+  "scoring_weights": {
+    "relevance":     0.5,
+    "novelty":       0.3,
+    "actionability": 0.2
+  },
+
+  "max_items_per_section": 10,
+  "min_score_threshold":   0.3,
+  "fresh_days":            7,
+  "rss_items_per_source":  10,
+  "arxiv_results_per_kw":  8,
+  "github_results_per_kw": 10,
+  "llm_batch_size":        20,
+  "llm_max_concurrency":   3,
+
+  "llm_model": "deepseek-ai/DeepSeek-V3",
+  "_llm_model_options": ["deepseek-ai/DeepSeek-V3", "deepseek-ai/DeepSeek-R1"],
+
+  "output_dir": "/briefeed-output"
+}
